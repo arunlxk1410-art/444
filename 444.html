@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research & Real-time Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body { font-family: 'Kanit', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .gradient-logo { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .nav-btn { color: #64748b; }
+        .dark .nav-btn { color: #94a3b8; }
+        .nav-btn:hover { color: #0f172a; background-color: #f1f5f9; }
+        .dark .nav-btn:hover { color: #f8fafc; background-color: #334155; }
+        .nav-btn.active { background-color: white; color: #2563eb; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .dark .nav-btn.active { background-color: #1e293b; color: #38bdf8; }
+
+        /* Form Radio Buttons CSS */
+        .form-radio {
+            appearance: none; background-color: #fff; margin: 0; font: inherit; color: currentColor;
+            width: 1.15em; height: 1.15em; border: 2px solid #cbd5e1; border-radius: 50%; display: grid; place-content: center;
+        }
+        .dark .form-radio { background-color: #334155; border-color: #475569; }
+        .form-radio::before {
+            content: ""; width: 0.65em; height: 0.65em; border-radius: 50%; transform: scale(0);
+            transition: 120ms transform ease-in-out; box-shadow: inset 1em 1em #2563eb;
+        }
+        .dark .form-radio::before { box-shadow: inset 1em 1em #38bdf8; }
+        .form-radio:checked::before { transform: scale(1); }
+        .form-radio:checked { border-color: #2563eb; }
+        .dark .form-radio:checked { border-color: #38bdf8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen">
+
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-colors">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-4">
+                    <div class="gradient-logo w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md">
+                        <i class="fa-solid fa-chart-simple text-2xl"></i>
+                    </div>
+                    <div>
+                        <!-- หัวข้อคลีนๆ ไม่มีซับไตเติลตามรีเควส -->
+                        <h1 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">Research & Real-time Analytics</h1>
+                    </div>
+                </div>
+                <div class="hidden lg:flex items-center gap-4">
+                    <div class="flex space-x-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg border border-slate-200 dark:border-slate-600">
+                        <button onclick="switchTab('dashboard', this)" class="nav-btn active px-5 py-2 font-medium rounded text-sm transition-colors lang-text" data-th="แดชบอร์ด" data-en="Dashboard">แดชบอร์ด</button>
+                        <button onclick="switchTab('survey', this)" class="nav-btn px-5 py-2 font-medium rounded text-sm transition-colors lang-text" data-th="ทำแบบสอบถาม" data-en="Survey">ทำแบบสอบถาม</button>
+                        <button onclick="switchTab('manage', this)" class="nav-btn px-5 py-2 font-medium rounded text-sm transition-colors lang-text" data-th="จัดการข้อมูล API" data-en="Manage Data">จัดการข้อมูล API</button>
+                        <button onclick="switchTab('table', this)" class="nav-btn px-5 py-2 font-medium rounded text-sm transition-colors lang-text" data-th="ตารางคำตอบ" data-en="Data Table">ตารางคำตอบ</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleLang()" id="langBtn" class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-600 flex items-center justify-center text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">TH</button>
+                        <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <i id="themeIcon" class="fa-solid fa-moon text-slate-600 dark:text-amber-400"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+        <!-- TAB 1: แดชบอร์ด -->
+        <div id="tab-dashboard" class="tab-content active">
+            
+            <div class="bg-white dark:bg-slate-800 rounded-xl card-shadow border border-slate-200 dark:border-slate-700 px-5 py-3 mb-6 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-sm font-bold text-slate-800 dark:text-slate-200 lang-text" data-th="ข้อมูลล่าสุด (Live Data)" data-en="Live Data">ข้อมูลล่าสุด (Live Data)</span>
+                    <span id="statusText" class="text-xs text-slate-500 dark:text-slate-400 font-medium ml-2">- กำลังโหลด...</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-medium text-slate-600 dark:text-slate-300"><span class="lang-text" data-th="ผู้ตอบทั้งหมด:" data-en="Total Responses:">ผู้ตอบทั้งหมด:</span> <span id="kpiTotalTop" class="font-bold text-blue-600 dark:text-blue-400 text-base">0</span></span>
+                    <button onclick="fetchData()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 border border-slate-200 dark:border-slate-600">
+                        <i class="fa-solid fa-arrows-rotate"></i> <span class="lang-text" data-th="รีเฟรชข้อมูล" data-en="Refresh Data">รีเฟรชข้อมูล</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="dashboardDataContainer" style="display: none;">
+                
+                <!-- Filters -->
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6 flex flex-wrap items-center gap-3">
+                    <div class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mr-2">
+                        <i class="fa-solid fa-filter text-blue-500"></i> <span class="lang-text" data-th="ตัวกรองแดชบอร์ด:" data-en="Filters:">ตัวกรองแดชบอร์ด:</span>
+                    </div>
+                    
+                    <select id="filter-age" onchange="applyFilters()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500">
+                        <option value="all">-- ทุกช่วงอายุ --</option>
+                        <option value="12-18 ปี">12-18 ปี</option>
+                        <option value="19-25 ปี">19-25 ปี</option>
+                        <option value="26-40 ปี">26-40 ปี</option>
+                        <option value="40-59 ปี">40-59 ปี</option>
+                        <option value="60 ปีขึ้นไป">60 ปีขึ้นไป</option>
+                    </select>
+
+                    <select id="filter-gender" onchange="applyFilters()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500">
+                        <option value="all">-- ทุกเพศ --</option>
+                        <option value="ชาย">ชาย</option>
+                        <option value="หญิง">หญิง</option>
+                        <option value="ไม่ระบุ">ไม่ระบุ</option>
+                    </select>
+
+                    <select id="filter-status" onchange="applyFilters()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500">
+                        <option value="all">-- ทุกสถานภาพ --</option>
+                        <option value="นักเรียน/นักศึกษา">นักเรียน/นักศึกษา</option>
+                        <option value="พนักงานบริษัทเอกชน">พนักงานบริษัทเอกชน / ข้าราชการ</option>
+                        <option value="ทำงานอิสระ">ทำงานอิสระ (Freelance)</option>
+                    </select>
+
+                    <select id="filter-income" onchange="applyFilters()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500">
+                        <option value="all">-- ทุกช่วงรายได้ --</option>
+                        <option value="ต่ำกว่า 15,000">ต่ำกว่า 15,000 บาท</option>
+                        <option value="15,001 - 30,000">15,001 - 30,000 บาท</option>
+                        <option value="30,001 - 50,000">30,001 - 50,000 บาท</option>
+                        <option value="50,000 บาทขึ้นไป">50,000 บาทขึ้นไป</option>
+                    </select>
+
+                    <button onclick="resetFilters()" class="ml-auto px-4 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-lg text-sm font-semibold transition-colors">
+                        <span class="lang-text" data-th="รีเซ็ต" data-en="Reset">รีเซ็ต</span>
+                    </button>
+                </div>
+
+                <!-- KPI -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 card-shadow border border-slate-100 dark:border-slate-700">
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 lang-text" data-th="คำตอบที่แสดงผล" data-en="Filtered Responses">คำตอบที่แสดงผล</p>
+                        <h3 class="text-4xl font-bold text-slate-900 dark:text-white" id="kpiTotal">0</h3>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 card-shadow border border-slate-100 dark:border-slate-700">
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 lang-text" data-th="ความยุติธรรมเฉลี่ย" data-en="Avg Fairness Index">ความยุติธรรมเฉลี่ย</p>
+                        <h3 class="text-4xl font-bold text-emerald-600 dark:text-emerald-400" id="kpiFairness">0.0 <span class="text-lg text-slate-400 font-normal">/ 5</span></h3>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 card-shadow border border-slate-100 dark:border-slate-700">
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 lang-text" data-th="รูปแบบเดทแรกยอดนิยม" data-en="Top First Date">รูปแบบเดทแรกยอดนิยม</p>
+                        <h3 class="text-lg font-bold text-purple-600 dark:text-purple-400 leading-tight h-10 overflow-hidden" id="kpiFirstDate">-</h3>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 card-shadow border border-slate-100 dark:border-slate-700">
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 lang-text" data-th="เคยเจอสถานการณ์อึดอัด" data-en="Awkward Experiences">เคยเจอสถานการณ์อึดอัด</p>
+                        <h3 class="text-4xl font-bold text-orange-500 dark:text-orange-400" id="kpiAwkward">0%</h3>
+                    </div>
+                </div>
+
+                <!-- สรุปคะแนนส่วนที่ 2 (คะแนนทัศนคติเฉลี่ยเต็ม 5) -->
+                <h3 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2 mt-10">
+                    <i class="fa-solid fa-star-half-stroke text-amber-500 mr-2"></i> ระดับความเห็นด้วยในแต่ละด้าน (เฉลี่ยจาก 5 คะแนน)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-10" id="part2AveragesContainer">
+                    <!-- HTML Cards จะถูกสร้างอัตโนมัติจาก JavaScript -->
+                </div>
+
+                <!-- Demographics -->
+                <h3 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2 lang-text" data-th="ข้อมูลทั่วไปของผู้ตอบ" data-en="Demographics">ข้อมูลทั่วไปของผู้ตอบ</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 text-center lang-text" data-th="ช่วงอายุ" data-en="Age">ช่วงอายุ</h4>
+                        <div style="height: 200px;"><canvas id="ageChart"></canvas></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 text-center lang-text" data-th="เพศ" data-en="Gender">เพศ</h4>
+                        <div style="height: 200px;"><canvas id="genderChart"></canvas></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 text-center lang-text" data-th="สถานภาพปัจจุบัน" data-en="Status">สถานภาพปัจจุบัน</h4>
+                        <div style="height: 200px;"><canvas id="statusChart"></canvas></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 text-center lang-text" data-th="ช่วงรายได้ต่อเดือน" data-en="Income">ช่วงรายได้ต่อเดือน</h4>
+                        <div style="height: 200px;"><canvas id="incomeChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- ส่วนที่ 3 HTML Progress Bars -->
+                <h3 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2 mt-10 lang-text" data-th="สถานการณ์เฉพาะและพฤติกรรม" data-en="Scenarios & Behaviors">สถานการณ์เฉพาะและพฤติกรรม</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">1. รูปแบบการจ่ายเงินในเดทแรก</h4>
+                        <div id="htmlFirstDateChart" class="w-full"></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">2. มื้อใหญ่หรือมีแอลกอฮอล์ (ที่ไม่ได้กิน)</h4>
+                        <div id="htmlExpensiveMealChart" class="w-full"></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">3. พฤติกรรมเมื่อถึงเวลาโอนเงินคืน</h4>
+                        <div id="htmlRepayChart" class="w-full"></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl card-shadow border border-slate-100 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">4. เมื่อถูกชวนไปร้านที่มีราคาสูงเกินงบ</h4>
+                        <div id="htmlOverbudgetChart" class="w-full"></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl card-shadow border border-slate-100 dark:border-slate-700 md:col-span-2">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">5. ผลของการหารที่ไม่เหมาะสมต่อการแฮงค์เอาต์ครั้งต่อไป</h4>
+                        <div id="htmlHangoutChart" class="w-full lg:w-1/2"></div>
+                    </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl card-shadow border border-slate-100 dark:border-slate-700 p-6 mb-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-regular fa-comments text-2xl text-blue-500"></i>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 lang-text" data-th="ประสบการณ์และข้อคิดเห็นเพิ่มเติม" data-en="Additional Comments">ประสบการณ์และข้อคิดเห็นเพิ่มเติม</h3>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                        <div id="commentsFeed" class="h-[400px] overflow-y-auto p-4 space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ทำแบบสอบถาม -->
+        <div id="tab-survey" class="tab-content">
+            <div class="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-xl card-shadow border border-slate-200 dark:border-slate-700 p-6 sm:p-10 text-left">
+                
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-6 mb-8 text-center sm:text-left">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">ทัศนคติต่อวัฒนธรรมการหารค่าใช้จ่าย</h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">กรุณาตอบตามความเป็นจริง ข้อมูลจะถูกนำไปใช้วิเคราะห์ผลในแดชบอร์ด</p>
+                </div>
+
+                <form id="nativeSurveyForm" onsubmit="submitSurvey(event)" class="space-y-10">
+                    
+                    <!-- ส่วนที่ 1 -->
+                    <div>
+                        <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 border-l-4 border-blue-500 mb-6">
+                            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">ส่วนที่ 1 ข้อมูลทั่วไปของผู้ตอบแบบสอบถาม (Demographic)</h3>
+                        </div>
+
+                        <div class="space-y-6 px-2 sm:px-4">
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">ช่วงอายุ <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="age" value="12-18 ปี" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">12-18 ปี</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="age" value="19-25 ปี" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">19-25 ปี</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="age" value="26-40 ปี" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">26-40 ปี</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="age" value="40-59 ปี" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">40-59 ปี</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="age" value="60 ปีขึ้นไป" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">60 ปีขึ้นไป</span></label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">เพศ <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="gender" value="ชาย" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">ชาย</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="gender" value="หญิง" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">หญิง</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="gender" value="ไม่ระบุ" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ไม่ระบุ</span></label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">สถานภาพปัจจุบัน <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="status" value="นักเรียน/นักศึกษา" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">นักเรียน/นักศึกษา</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="status" value="พนักงานบริษัทเอกชน / ข้าราชการ / รัฐวิสาหกิจ" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">พนักงานบริษัทเอกชน / ข้าราชการ / รัฐวิสาหกิจ</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="status" value="ทำงานอิสระ (Freelance) / เจ้าของธุรกิจส่วนตัว" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ทำงานอิสระ (Freelance) / เจ้าของธุรกิจส่วนตัว</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="radio" name="status" value="อื่นๆ" class="form-radio">
+                                        <span class="text-slate-700 dark:text-slate-300">อื่นๆ:</span>
+                                        <input type="text" class="border-b border-slate-300 dark:border-slate-600 bg-transparent focus:outline-none focus:border-blue-500 ml-2 w-48 text-slate-700 dark:text-slate-300">
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">ช่วงรายได้ต่อเดือน <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="income" value="ต่ำกว่า 15,000 บาท" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">ต่ำกว่า 15,000 บาท</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="income" value="15,001 - 30,000 บาท" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">15,001 - 30,000 บาท</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="income" value="30,001 - 50,000 บาท" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">30,001 - 50,000 บาท</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="income" value="50,000 บาทขึ้นไป" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">50,000 บาทขึ้นไป</span></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ส่วนที่ 2 -->
+                    <div>
+                        <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 border-l-4 border-blue-500 mb-6">
+                            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">ส่วนที่ 2 ทัศนคติต่อวัฒนธรรมการหารค่าใช้จ่าย</h3>
+                            <p class="text-sm text-slate-500 mt-1">โปรดเลือกระดับความเห็นด้วย (1 = ไม่เห็นด้วยอย่างยิ่ง, 5 = เห็นด้วยอย่างยิ่ง)</p>
+                        </div>
+                        <div class="space-y-6 px-2 sm:px-4">
+                            <!-- ข้อ 1 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-4">ด้านความยุติธรรม: การหารเท่ากันทุกกรณี เป็นวิธีที่ยุติธรรมและรักษาน้ำใจเพื่อนที่สุด <span class="text-red-500">*</span></label>
+                                <div class="flex justify-between items-center gap-2 max-w-lg mx-auto bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">ไม่เห็นด้วยอย่างยิ่ง</span>
+                                    <div class="flex gap-4 sm:gap-6">
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert1" value="1" class="form-radio" required><span class="text-xs">1</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert1" value="2" class="form-radio"><span class="text-xs">2</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert1" value="3" class="form-radio"><span class="text-xs">3</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert1" value="4" class="form-radio"><span class="text-xs">4</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert1" value="5" class="form-radio"><span class="text-xs">5</span></label>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">เห็นด้วยอย่างยิ่ง</span>
+                                </div>
+                            </div>
+                            <!-- ข้อ 2 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-4">ด้านการป้องกันการเอาเปรียบ: การหารตามราคาอาหาร/เครื่องดื่มที่ตนสั่งเท่านั้น เพื่อไม่ให้เกิดการเอาเปรียบ <span class="text-red-500">*</span></label>
+                                <div class="flex justify-between items-center gap-2 max-w-lg mx-auto bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">ไม่เห็นด้วยอย่างยิ่ง</span>
+                                    <div class="flex gap-4 sm:gap-6">
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert2" value="1" class="form-radio" required><span class="text-xs">1</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert2" value="2" class="form-radio"><span class="text-xs">2</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert2" value="3" class="form-radio"><span class="text-xs">3</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert2" value="4" class="form-radio"><span class="text-xs">4</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert2" value="5" class="form-radio"><span class="text-xs">5</span></label>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">เห็นด้วยอย่างยิ่ง</span>
+                                </div>
+                            </div>
+                            <!-- ข้อ 3 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-4">ด้านความสัมพันธ์กับรายได้: คนมีรายได้มากกว่าควรเป็นผู้จ่ายส่วนใหญ่ ความเป็นเพื่อนถึงจะยั่งยืน <span class="text-red-500">*</span></label>
+                                <div class="flex justify-between items-center gap-2 max-w-lg mx-auto bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">ไม่เห็นด้วยอย่างยิ่ง</span>
+                                    <div class="flex gap-4 sm:gap-6">
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert3" value="1" class="form-radio" required><span class="text-xs">1</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert3" value="2" class="form-radio"><span class="text-xs">2</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert3" value="3" class="form-radio"><span class="text-xs">3</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert3" value="4" class="form-radio"><span class="text-xs">4</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert3" value="5" class="form-radio"><span class="text-xs">5</span></label>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">เห็นด้วยอย่างยิ่ง</span>
+                                </div>
+                            </div>
+                            <!-- ข้อ 4 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-4">ด้านความละเอียดอ่อน: การคิด Service charge, VAT หรือค่าเดินทาง ควรถูกรวมเข้าไปในยอดหารด้วย <span class="text-red-500">*</span></label>
+                                <div class="flex justify-between items-center gap-2 max-w-lg mx-auto bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">ไม่เห็นด้วยอย่างยิ่ง</span>
+                                    <div class="flex gap-4 sm:gap-6">
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert4" value="1" class="form-radio" required><span class="text-xs">1</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert4" value="2" class="form-radio"><span class="text-xs">2</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert4" value="3" class="form-radio"><span class="text-xs">3</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert4" value="4" class="form-radio"><span class="text-xs">4</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert4" value="5" class="form-radio"><span class="text-xs">5</span></label>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">เห็นด้วยอย่างยิ่ง</span>
+                                </div>
+                            </div>
+                            <!-- ข้อ 5 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-4">ด้านความเกรงใจ: รู้สึกเกรงใจที่จะทวงเงินเพื่อนเมื่อเพื่อนจ่ายช้าหรือไม่ยอมจ่าย <span class="text-red-500">*</span></label>
+                                <div class="flex justify-between items-center gap-2 max-w-lg mx-auto bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">ไม่เห็นด้วยอย่างยิ่ง</span>
+                                    <div class="flex gap-4 sm:gap-6">
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert5" value="1" class="form-radio" required><span class="text-xs">1</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert5" value="2" class="form-radio"><span class="text-xs">2</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert5" value="3" class="form-radio"><span class="text-xs">3</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert5" value="4" class="form-radio"><span class="text-xs">4</span></label>
+                                        <label class="flex flex-col items-center gap-1 cursor-pointer"><input type="radio" name="likert5" value="5" class="form-radio"><span class="text-xs">5</span></label>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium w-16 text-center leading-tight">เห็นด้วยอย่างยิ่ง</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ส่วนที่ 3 -->
+                    <div>
+                        <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 border-l-4 border-blue-500 mb-6">
+                            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">ส่วนที่ 3 สถานการณ์เฉพาะ (Scenarios)</h3>
+                        </div>
+                        <div class="space-y-6 px-2 sm:px-4">
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">1. ในการเจอกันครั้งแรก (First date) คุณคิดว่ารูปแบบการจ่ายเงินแบบไหนเหมาะสมที่สุด <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen1" value="ฝ่ายที่ชวนควรเป็นคนรับผิดชอบทั้งหมด" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">ฝ่ายที่ชวนควรเป็นคนรับผิดชอบทั้งหมด</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen1" value="หารแบ่งกันคนละครึ่งพอดี" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">หารแบ่งกันคนละครึ่งพอดี</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen1" value="ฝ่ายชายควรเป็นคนจ่าย (ตามธรรมเนียมดั้งเดิม)" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ฝ่ายชายควรเป็นคนจ่าย (ตามธรรมเนียมดั้งเดิม)</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen1" value="สลับกันจ่าย (เช่น คนหนึ่งจ่ายค่าอาหาร อีกคนจ่ายค่ากาแฟ)" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">สลับกันจ่าย (เช่น คนหนึ่งจ่ายค่าอาหาร อีกคนจ่ายค่ากาแฟ)</span></label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">2. หากไปทานอาหารกลุ่มใหญ่และมีคนสั่งเมนูราคาแพงหรือแอลกอฮอล์ (โดยที่คุณไม่ได้ทาน) คุณคาดหวังให้จัดการบิลอย่างไร <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen2" value="หารเท่ากันทั้งหมดเพื่อตัดปัญหาความยุ่งยาก" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">หารเท่ากันทั้งหมดเพื่อตัดปัญหาความยุ่งยาก</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen2" value="แยกบิลเฉพาะคนที่กินเมนูแพง/แอลกอฮอล์จ่ายเพิ่ม" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">แยกบิลเฉพาะคนที่กินเมนูแพง/แอลกอฮอล์จ่ายเพิ่ม</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen2" value="คนที่สั่งควรเสนอตัวจ่ายส่วนต่างเองโดยไม่ต้องให้คนอื่นทวง" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">คนที่สั่งควรเสนอตัวจ่ายส่วนต่างเองโดยไม่ต้องให้คนอื่นทวง</span></label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">3. เมื่อถึงเวลาที่ต้องโอนเงินคืนเพื่อน คุณมีพฤติกรรมอย่างไร <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen3" value="โอนคืนทันทีที่ได้รับแจ้งยอดหรือเห็นบิล" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">โอนคืนทันทีที่ได้รับแจ้งยอดหรือเห็นบิล</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen3" value="รอให้เพื่อนทวงก่อน ค่อยโอนให้เพื่อความชัวร์" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">รอให้เพื่อนทวงก่อน ค่อยโอนให้เพื่อความชัวร์</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen3" value="โอนช้าข้ามวัน/ข้ามสัปดาห์ เนื่องจากลืมหรือรอเงินเดือนออก" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">โอนช้าข้ามวัน/ข้ามสัปดาห์ เนื่องจากลืมหรือรอเงินเดือนออก</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen3" value="ผลัดผ่อนหรือแกล้งเนียนไม่ยอมจ่าย" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ผลัดผ่อนหรือแกล้งเนียนไม่ยอมจ่าย</span></label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">4. หากคุณถูกเพื่อนชวนไปทานอาหารในร้านที่ราคาเกินงบที่คุณตั้งไว้ คุณจะทำอย่างไร <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen4" value="ไปตามปกติ ยอมจ่ายเกินงบเพื่อรักษาความสัมพันธ์กับเพื่อน" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">ไปตามปกติ ยอมจ่ายเกินงบเพื่อรักษาความสัมพันธ์กับเพื่อน</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen4" value="ไปด้วยแต่สั่งเมนูที่ราคาถูกที่สุด หรือขอกินน้ำเปล่าอย่างเดียว" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ไปด้วยแต่สั่งเมนูที่ราคาถูกที่สุด หรือขอกินน้ำเปล่าอย่างเดียว</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen4" value="ปฏิเสธการไปร่วมวงและบอกเหตุผลตามตรงว่าร้านแพงเกินไป" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ปฏิเสธการไปร่วมวงและบอกเหตุผลตามตรงว่าร้านแพงเกินไป</span></label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">5. พฤติกรรมการหารค่าใช้จ่ายของเพื่อนมีผลต่อการตัดสินใจไปแฮงก์เอาต์ด้วยในครั้งต่อไปหรือไม่ <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen5" value="มีผลอย่างมาก" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">มีผลอย่างมาก</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen5" value="มีผลปานกลาง" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">มีผลปานกลาง</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="scen5" value="ไม่มีผลเลย" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ไม่มีผลเลย</span></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ส่วนที่ 4 -->
+                    <div>
+                        <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 border-l-4 border-blue-500 mb-6">
+                            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">ส่วนที่ 4 ประสบการณ์และข้อคิดเห็นเพิ่มเติม</h3>
+                        </div>
+                        <div class="space-y-6 px-2 sm:px-4">
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">คุณเคยเจอ "สถานการณ์อึดอัดใจ" เกี่ยวกับการหารค่าใช้จ่ายหรือไม่? (เช่น ทวงเงินยาก, โดนเอาเปรียบ) <span class="text-red-500">*</span></label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="awkward" value="เคย" class="form-radio" required> <span class="text-slate-700 dark:text-slate-300">เคย</span></label>
+                                    <label class="flex items-center gap-3 cursor-pointer"><input type="radio" name="awkward" value="ไม่เคย" class="form-radio"> <span class="text-slate-700 dark:text-slate-300">ไม่เคย</span></label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-slate-800 dark:text-slate-200 font-semibold mb-3">ข้อคิดเห็นเพิ่มเติมเกี่ยวกับการหารค่าใช้จ่าย (ถ้ามี)</label>
+                                <textarea name="comment" rows="4" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 rounded-lg p-3 focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-300" placeholder="คำตอบของคุณ..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-4">
+                        <button id="submitBtn" type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-lg shadow-sm transition-colors text-lg w-full sm:w-auto">
+                            ส่งแบบสอบถาม
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB 3: จัดการแหล่งข้อมูล -->
+        <div id="tab-manage" class="tab-content bg-white dark:bg-slate-800 rounded-xl card-shadow p-8 border border-slate-100 dark:border-slate-700 max-w-2xl mx-auto">
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4 lang-text" data-th="ตั้งค่าลิงก์เชื่อมต่อ API" data-en="API Connection Settings">ตั้งค่าลิงก์เชื่อมต่อ API</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 lang-text" data-th="วางลิงก์ Google Apps Script ของคุณที่นี่ ระบบจะจดจำไว้ดึงข้อมูลตลอดไป" data-en="Paste your Google Apps Script link here.">วางลิงก์ Google Apps Script ของคุณที่นี่ ระบบจะจดจำไว้ดึงข้อมูลตลอดไป</p>
+            <input type="text" id="apiInput" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 mb-4">
+            <button onclick="saveAndLoad()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition-colors shadow-sm lang-text" data-th="บันทึกและโหลดข้อมูล" data-en="Save & Load Data">
+                บันทึกและโหลดข้อมูล
+            </button>
+        </div>
+
+        <!-- TAB 4: ตารางข้อมูลดิบ -->
+        <div id="tab-table" class="tab-content bg-white dark:bg-slate-800 rounded-xl card-shadow p-6 border border-slate-100 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white lang-text" data-th="ตารางข้อมูลผู้ตอบ (ครบทุกข้อ)" data-en="Raw Data Table">ตารางข้อมูลผู้ตอบ (ครบทุกข้อ)</h2>
+                <span id="tableCountBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">0 รายการ</span>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <th class="px-4 py-3 font-semibold">เวลา</th>
+                            <th class="px-4 py-3 font-semibold">อายุ</th>
+                            <th class="px-4 py-3 font-semibold">เพศ</th>
+                            <th class="px-4 py-3 font-semibold">สถานภาพ</th>
+                            <th class="px-4 py-3 font-semibold">รายได้</th>
+                            <th class="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400">ด้านความยุติธรรม</th>
+                            <th class="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400">ด้านการป้องกันการเอาเปรียบ</th>
+                            <th class="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400">ด้านความสัมพันธ์กับรายได้</th>
+                            <th class="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400">ด้านความละเอียดอ่อน</th>
+                            <th class="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400">ด้านความเกรงใจ</th>
+                            <th class="px-4 py-3 font-semibold text-rose-500 dark:text-rose-400">รูปแบบเดทแรก</th>
+                            <th class="px-4 py-3 font-semibold text-rose-500 dark:text-rose-400">มื้อใหญ่/แอลกอฮอล์</th>
+                            <th class="px-4 py-3 font-semibold text-rose-500 dark:text-rose-400">การโอนเงินคืน</th>
+                            <th class="px-4 py-3 font-semibold text-rose-500 dark:text-rose-400">ร้านเกินงบ</th>
+                            <th class="px-4 py-3 font-semibold text-rose-500 dark:text-rose-400">ผลต่อการแฮงก์เอาต์</th>
+                            <th class="px-4 py-3 font-semibold text-orange-500">เคยอึดอัด</th>
+                            <th class="px-4 py-3 font-semibold">ข้อคิดเห็นเพิ่มเติม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rawTableBody" class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300">
+                        <tr><td colspan="17" class="px-4 py-8 text-center text-slate-400">กำลังรอข้อมูล...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let charts = {};
+        let isThai = true;
+        // ลิงก์ API ค่าเริ่มต้น
+        let APP_URL = 'https://script.google.com/macros/s/AKfycbx5xZpa-fA_iF5It6gYdYuBrzfBzjU5vS-6rf0qc1TF97-e8dZ2u2VZhY-JmeJECA3p/exec';
+
+        window.onload = () => {
+            const saved = localStorage.getItem('mySavedApiUrl');
+            if (saved) APP_URL = saved;
+            document.getElementById('apiInput').value = APP_URL;
+            fetchData();
+        };
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            if(btn) btn.classList.add('active');
+        }
+
+        function toggleLang() {
+            isThai = !isThai;
+            document.getElementById('langBtn').innerText = isThai ? 'TH' : 'EN';
+            document.querySelectorAll('.lang-text').forEach(el => {
+                el.innerText = el.getAttribute(isThai ? 'data-th' : 'data-en');
+            });
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const icon = document.getElementById('themeIcon');
+            if(html.classList.contains('dark')) {
+                icon.classList.remove('fa-moon'); icon.classList.add('fa-sun');
+                Chart.defaults.color = '#cbd5e1';
+            } else {
+                icon.classList.remove('fa-sun'); icon.classList.add('fa-moon');
+                Chart.defaults.color = '#475569';
+            }
+            if(window.globalData) applyFilters();
+        }
+
+        function submitSurvey(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึกข้อมูล...';
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+
+            setTimeout(() => {
+                alert('ส่งข้อมูลสำเร็จ! ขอบคุณสำหรับความคิดเห็นของคุณ');
+                e.target.reset();
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                switchTab('dashboard', document.querySelectorAll('.nav-btn')[0]);
+                window.scrollTo(0, 0);
+            }, 1200);
+        }
+
+        function saveAndLoad() {
+            const url = document.getElementById('apiInput').value.trim();
+            if (url) {
+                localStorage.setItem('mySavedApiUrl', url);
+                APP_URL = url;
+                switchTab('dashboard', document.querySelectorAll('.nav-btn')[0]);
+                fetchData();
+            }
+        }
+
+        async function fetchData() {
+            const statusBox = document.getElementById('statusText');
+            statusBox.innerText = '- กำลังโหลด...';
+            statusBox.className = "text-xs font-medium ml-2 text-amber-500";
+            
+            try {
+                const res = await fetch(APP_URL, { redirect: 'follow' });
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const rawData = await res.text();
+                
+                let dataRows;
+                try { dataRows = JSON.parse(rawData); } 
+                catch(e) { throw new Error("ข้อมูลไม่ใช่ JSON"); }
+
+                if(!Array.isArray(dataRows)) throw new Error("ข้อมูลไม่ใช่ตาราง");
+
+                if(dataRows.length > 0 && dataRows[0] && (dataRows[0][0] === "ประทับเวลา" || String(dataRows[0][0]).includes("Timestamp"))) {
+                    dataRows.shift(); 
+                }
+
+                window.globalData = dataRows;
+                resetFilters();
+
+                document.getElementById('dashboardDataContainer').style.display = 'block';
+                statusBox.innerText = '- เชื่อมต่อสำเร็จ';
+                statusBox.className = "text-xs font-medium ml-2 text-emerald-600 dark:text-emerald-400";
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                statusBox.innerText = `- ข้อผิดพลาด: ${error.message}`;
+                statusBox.className = "text-xs font-medium ml-2 text-red-500";
+            }
+        }
+
+        function applyFilters() {
+            if(!window.globalData) return;
+            
+            const fAge = document.getElementById('filter-age').value;
+            const fGender = document.getElementById('filter-gender').value;
+            const fStatus = document.getElementById('filter-status').value;
+            const fIncome = document.getElementById('filter-income').value;
+
+            const filteredData = window.globalData.filter(r => {
+                const matchAge = (fAge === 'all') || (String(r[1]).includes(fAge));
+                const matchGender = (fGender === 'all') || (String(r[2]) === fGender);
+                const matchStatus = (fStatus === 'all') || (String(r[3]).includes(fStatus));
+                const matchIncome = (fIncome === 'all') || (String(r[4]).includes(fIncome));
+                return matchAge && matchGender && matchStatus && matchIncome;
+            });
+
+            processDashboardData(filteredData);
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-age').value = 'all';
+            document.getElementById('filter-gender').value = 'all';
+            document.getElementById('filter-status').value = 'all';
+            document.getElementById('filter-income').value = 'all';
+            applyFilters();
+        }
+
+        function processDashboardData(rows) {
+            const ages = [], genders = [], statuses = [], incomes = [];
+            let sums = [0,0,0,0,0], counts = [0,0,0,0,0];
+            const firstDates = [], expMeals = [], repays = [], overBudgets = [], hangouts = [];
+            let awkwardCount = 0;
+            const validComments = [];
+
+            const junkWords = ["-", "ไม่มี", "ไม่มีครับ", "ไม่มีค่ะ", "ไม่มีจ้า", "ไม่มีความคิดเห็น", "ไม่", "ไม่มีปัญหา"];
+
+            rows.forEach(r => {
+                if(r[1]) ages.push(r[1]);
+                if(r[2]) genders.push(r[2]);
+                if(r[3]) statuses.push(r[3]);
+                if(r[4]) incomes.push(r[4]);
+                
+                for(let i = 0; i < 5; i++) {
+                    const val = parseInt(r[5+i]);
+                    if(!isNaN(val)) { sums[i] += val; counts[i]++; }
+                }
+
+                if(r[10]) firstDates.push(r[10]);
+                if(r[11]) expMeals.push(r[11]);
+                if(r[12]) repays.push(r[12]);
+                if(r[13]) overBudgets.push(r[13]);
+                if(r[14]) hangouts.push(r[14]);
+                
+                if(r[15] && String(r[15]).includes("เคย")) awkwardCount++;
+
+                const cmt = String(r[16] || "");
+                if(cmt.trim().length > 1 && !junkWords.includes(cmt.trim())) {
+                    validComments.push({ text: cmt.trim(), meta: `${r[2] || 'ไม่ระบุ'} (${r[1] || 'ไม่ระบุ'})` });
+                }
+            });
+
+            const total = rows.length;
+            document.getElementById('kpiTotal').innerText = total;
+            document.getElementById('kpiTotalTop').innerText = window.globalData ? window.globalData.length : 0;
+            
+            document.getElementById('kpiFairness').innerHTML = counts[0] > 0 ? `${(sums[0] / counts[0]).toFixed(1)} <span class="text-xl text-slate-400 font-normal">/ 5</span>` : "0.0";
+            document.getElementById('kpiAwkward').innerText = total > 0 ? `${Math.round((awkwardCount / total) * 100)}%` : "0%";
+            document.getElementById('kpiFirstDate').innerText = truncateLabel(getTopMode(firstDates), 35);
+
+            // การ์ดส่วนที่ 2
+            const p2Titles = ["ด้านความยุติธรรม", "การป้องกันเอาเปรียบ", "ความสัมพันธ์กับรายได้", "ความละเอียดอ่อน", "ด้านความเกรงใจ"];
+            const p2Colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-amber-500'];
+            let p2Html = '';
+            for(let i = 0; i < 5; i++) {
+                let avg = counts[i] > 0 ? (sums[i] / counts[i]).toFixed(1) : "0.0";
+                let pct = (avg / 5) * 100;
+                p2Html += `
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl card-shadow border border-slate-100 dark:border-slate-700 flex flex-col justify-center">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">${p2Titles[i]}</span>
+                        <div class="flex items-end gap-2 mb-2">
+                            <span class="text-2xl font-black text-slate-800 dark:text-white leading-none">${avg}</span>
+                            <span class="text-xs text-slate-400 font-medium mb-0.5">/ 5</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 mt-auto">
+                            <div class="${p2Colors[i]} h-1.5 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>`;
+            }
+            document.getElementById('part2AveragesContainer').innerHTML = p2Html;
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#334155' : '#f1f5f9';
+            
+            renderBarChart('ageChart', ages, '#3b82f6', gridColor);
+            renderPieChart('genderChart', genders, ['#ec4899', '#3b82f6', '#94a3b8']);
+            renderPieChart('statusChart', statuses, ['#a855f7', '#d946ef', '#ec4899', '#8b5cf6']); 
+            renderBarChart('incomeChart', incomes, '#10b981', gridColor);
+            
+            // วาดแถบ Progress HTML
+            renderHtmlBarChart('htmlFirstDateChart', firstDates, 'bg-rose-500');
+            renderHtmlBarChart('htmlExpensiveMealChart', expMeals, 'bg-sky-500');
+            renderHtmlBarChart('htmlRepayChart', repays, 'bg-emerald-500');
+            renderHtmlBarChart('htmlOverbudgetChart', overBudgets, 'bg-indigo-500');
+            renderHtmlBarChart('htmlHangoutChart', hangouts, 'bg-amber-500');
+
+            const feed = document.getElementById('commentsFeed');
+            feed.innerHTML = '';
+            if(validComments.length === 0) {
+                feed.innerHTML = '<div class="text-center text-slate-400 dark:text-slate-500 mt-10">ไม่มีข้อคิดเห็นเพิ่มเติม</div>';
+            } else {
+                validComments.forEach(c => {
+                    feed.innerHTML += `
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-3">
+                            <p class="text-slate-700 dark:text-slate-300 text-sm mb-2 font-medium">"${c.text}"</p>
+                            <p class="text-xs text-blue-500 dark:text-blue-400 font-semibold text-right">— ${c.meta}</p>
+                        </div>`;
+                });
+            }
+
+            renderTable(rows);
+        }
+
+        function renderHtmlBarChart(containerId, dataArray, colorClass) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            if(dataArray.length === 0) { container.innerHTML = '<p class="text-xs text-slate-400">ไม่มีข้อมูล</p>'; return; }
+            
+            const counts = {};
+            dataArray.forEach(i => counts[i] = (counts[i] || 0) + 1);
+            const sortedKeys = Object.keys(counts).sort((a,b) => counts[b] - counts[a]); 
+            
+            let html = '<div class="space-y-3 mt-4">';
+            sortedKeys.forEach(key => {
+                const count = counts[key];
+                const pct = Math.round((count / dataArray.length) * 100);
+                html += `
+                    <div class="flex flex-col">
+                        <div class="flex justify-between items-start text-xs sm:text-sm mb-1.5 gap-4">
+                            <span class="text-slate-700 dark:text-slate-300 leading-snug">${key}</span>
+                            <span class="font-bold text-slate-900 dark:text-white whitespace-nowrap">${count} (${pct}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
+                            <div class="${colorClass} h-2 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderTable(rows) {
+            document.getElementById('tableCountBadge').innerText = `${rows.length} รายการ`;
+            const tbody = document.getElementById('rawTableBody');
+            tbody.innerHTML = '';
+            if (rows.length === 0) return;
+
+            rows.forEach(r => {
+                let dateStr = r[0] ? new Date(r[0]).toLocaleString('th-TH') : '-';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${dateStr}</td>
+                        <td class="px-4 py-3">${r[1] || '-'}</td>
+                        <td class="px-4 py-3">${r[2] || '-'}</td>
+                        <td class="px-4 py-3"><div class="truncate max-w-[100px]" title="${r[3]}">${r[3] || '-'}</div></td>
+                        <td class="px-4 py-3">${r[4] || '-'}</td>
+                        <td class="px-4 py-3 text-center text-blue-600 dark:text-blue-400">${r[5] || '-'}</td>
+                        <td class="px-4 py-3 text-center text-blue-600 dark:text-blue-400">${r[6] || '-'}</td>
+                        <td class="px-4 py-3 text-center text-blue-600 dark:text-blue-400">${r[7] || '-'}</td>
+                        <td class="px-4 py-3 text-center text-blue-600 dark:text-blue-400">${r[8] || '-'}</td>
+                        <td class="px-4 py-3 text-center text-blue-600 dark:text-blue-400">${r[9] || '-'}</td>
+                        <td class="px-4 py-3"><div class="truncate max-w-[120px]" title="${r[10]}">${r[10] || '-'}</div></td>
+                        <td class="px-4 py-3"><div class="truncate max-w-[120px]" title="${r[11]}">${r[11] || '-'}</div></td>
+                        <td class="px-4 py-3"><div class="truncate max-w-[120px]" title="${r[12]}">${r[12] || '-'}</div></td>
+                        <td class="px-4 py-3"><div class="truncate max-w-[120px]" title="${r[13]}">${r[13] || '-'}</div></td>
+                        <td class="px-4 py-3"><div class="truncate max-w-[120px]" title="${r[14]}">${r[14] || '-'}</div></td>
+                        <td class="px-4 py-3 text-orange-500 dark:text-orange-400">${r[15] || '-'}</td>
+                        <td class="px-4 py-3"><div class="truncate max-w-[200px]" title="${r[16]}">${r[16] || '-'}</div></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function getTopMode(arr) {
+            if(arr.length === 0) return "-";
+            const c = {}; let max = 0, top = "-";
+            arr.forEach(i => { c[i] = (c[i] || 0) + 1; if(c[i] > max) { max = c[i]; top = i; } });
+            return top;
+        }
+        function truncateLabel(t, m) { return t.length > m ? t.substring(0, m) + '...' : t; }
+        
+        Chart.defaults.font.family = "'Kanit', sans-serif";
+
+        function wrapLabel(t, m) {
+            if (!t) return ["-"];
+            const w = t.split(' '); const l = []; let c = "";
+            w.forEach(word => { if ((c + word).length > m) { l.push(c.trim()); c = word + " "; } else c += word + " "; });
+            l.push(c.trim()); return l;
+        }
+
+        function renderBarChart(id, arr, color, gridColor) {
+            const ctx = document.getElementById(id); if(charts[id]) charts[id].destroy();
+            const c = {}; arr.forEach(i => c[i] = (c[i]||0)+1);
+            charts[id] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: Object.keys(c).map(l => wrapLabel(l, 12)), datasets: [{ data: Object.values(c), backgroundColor: color, borderRadius: 4 }] },
+                options: { plugins: { legend: { display: false } }, maintainAspectRatio: false, scales: { x: { grid: {display: false} }, y: { grid: {color: gridColor}, ticks: {precision:0} } } }
+            });
+        }
+
+        function renderPieChart(id, arr, colors) {
+            const ctx = document.getElementById(id); if(charts[id]) charts[id].destroy();
+            const c = {}; arr.forEach(i => c[i] = (c[i]||0)+1);
+            charts[id] = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: Object.keys(c).map(l => truncateLabel(l, 30)), datasets: [{ data: Object.values(c), backgroundColor: colors, borderWidth: 0 }] },
+                options: { plugins: { legend: { position: 'bottom', labels: { padding: 12, boxWidth: 12, font:{size: 11} } } }, maintainAspectRatio: false, cutout: '55%' }
+            });
+        }
+    </script>
+</body>
+</html>
